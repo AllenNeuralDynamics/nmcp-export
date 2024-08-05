@@ -1,0 +1,32 @@
+{
+  "name": "nmcp-export",
+  "version": "2.0.1",
+  "main": "dist/app.js",
+  "repository": "https://github.com/AllenNeuralDynamics/nmcp-export.git",
+  "author": "Patrick Edson <pedson@leapscientific.com>",
+  "license": "SEE LICENSE IN LICENSE",
+  "dockerRepository": "mouselightdatabrowser",
+  "dockerImageName": "export-api",
+  "scripts": {
+    "debug": "tsc && node --trace-warnings --max-old-space-size=8192 --optimize-for-size src/app.js",
+    "express": "node dist/app.js"
+  },
+  "dependencies": {
+    "archiver": "^2.0.3",
+    "body-parser": "^1.17.2",
+    "debug": "^2.6.8",
+    "express": "^4.15.3",
+    "influx": "^5.0.7",
+    "moment": "^2.19.1",
+    "uuid": "^3.1.0"
+  },
+  "devDependencies": {
+    "@types/archiver": "^2.0.0",
+    "@types/express": "^4.0.35",
+    "@types/gulp": "^4.0.7",
+    "@types/gulp-shell": "^0.7.0",
+    "@types/lodash": "^4.14.64",
+    "@types/uuid": "^3.4.3",
+    "typescript": "^5.3.3"
+  }
+}
