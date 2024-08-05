@@ -1,20 +1,15 @@
-import {ExportFormat, ExportCacheBase} from "../export/exportCacheBase";
+import {ExportFormat} from "../export/exportCacheBase";
 import {JsonExportCache} from "../export/jsonExportCache";
 import {SwcExportCache} from "../export/swcExportCache";
 
-const swcExport = (new SwcExportCache()).loadContents();
+const swcExport = new SwcExportCache();
 
-const jsonExport = (new JsonExportCache()).loadContents();
+const jsonExport = new JsonExportCache();
 
-const map = new Map<ExportFormat, ExportCacheBase>();
-
-map.set(ExportFormat.Swc, swcExport);
-map.set(ExportFormat.Json, jsonExport);
-
-export async function exportMiddleware(req, res, next) {
+export async function exportMiddleware(req: any, res: any, next: any) {
     const format = req.body.format as ExportFormat ?? ExportFormat.Swc;
 
-    const source = (map.get(format));
+    const source = format == ExportFormat.Swc ? swcExport : jsonExport;
 
     if (source) {
         const response = await source.findContents(req.body.ids)

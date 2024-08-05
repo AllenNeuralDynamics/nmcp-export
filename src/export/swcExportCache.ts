@@ -1,65 +1,56 @@
 import * as fs from "fs";
-import * as path from "path";
 import * as archiver from "archiver";
 import * as uuid from "uuid";
-import {ServiceOptions} from "../options/serviceOptions";
 import {ExportFormat, ExportCacheBase, IExportResponse} from "./exportCacheBase";
 import moment = require("moment");
-
-const debug = require("debug")("nmcp:export-api:swc");
 
 export class SwcExportCache extends ExportCacheBase {
     public constructor() {
         super(ExportFormat.Swc);
     }
 
-    public loadContents(): ExportCacheBase {
-        const dataLocation = path.join(ServiceOptions.dataPath, "swc");
+    protected override formatReconstruction(data: any): any {
+        let content = `# Generated: ${moment().format("YYYY/MM/DD")}\n`
+            + `# DOI:\t\t\t\t\t${data.doi || "n/a"}\n`
+            + `# Neuron Id:\t\t\t${data.idString}\n`
+            + `# Sample Date:\t\t\t${data.sample.sampleDate}\n`
+            + `# Sample Subject:\t\t${data.sample.subject}\n`
+            + `# Sample Strain:\t\t${data.sample.genotype}\n`
+            + `# Label Virus:\t\t\t${data.sample.virus}\n`
+            + `# Label Fluorophore:\t${data.sample.fluorophore}\n`
+            + `# Annotation Space:\t\tCCFv3.0 Axes> X: Anterior-Posterior; Y: Inferior-Superior; Z:Left-Right\n`
+            + `# ${this._termsOfUse}\n`;
 
-        if (!fs.existsSync(dataLocation)) {
-            debug("swc data path does not exist");
-            return;
+        let offset = 0;
+
+        if (data.axon) {
+            content += mapSomaIfPresent(data.axon);
+            const subset = data.axon.filter(n => n.parentNumber != -1)
+            content += mapToSwc(subset, 2, offset);
+            offset += subset.length;
         }
 
-        debug("initiating swc cache load");
-
-        fs.readdirSync(dataLocation).forEach(file => {
-            if (file.slice(-4) === ".swc") {
-                const swcName = file.slice(0, -4);
-
-                const data = fs.readFileSync(path.join(dataLocation, file), {encoding: "utf8"});
-
-                this._cache.set(swcName, data);
+        if (data.dendrite) {
+            if (offset == 0) {
+                content += mapSomaIfPresent(data.axon);
             }
-        });
+            content += mapToSwc(data.dendrite.filter(n => n.parentNumber != -1), 3, offset);
+        }
 
-        debug(`loaded ${this._cache.size} neurons (swc)`)
-
-        return this;
+        return content;
     }
 
-    public async findContents(ids: string[]): Promise<IExportResponse> {
-        if (!ids || ids.length === 0) {
-            debug(`null swc id request`);
-            return null;
-        }
-
-        debug(`handling swc request for ids: ${ids.join(", ")}`);
-
+    protected override async formatResponse(neurons: any[], filenames: string[]): Promise<IExportResponse> {
         let response: IExportResponse;
 
-        if (ids.length === 1) {
+        if (neurons.length === 1) {
             let encoded = null;
 
-            const data = this._cache.get(ids[0]);
-
-            if (data) {
-                encoded = Buffer.from(`# Downloaded ${moment().format("YYYY/MM/DD")}. \n` + data).toString("base64");
-            }
+            encoded = Buffer.from(neurons[0]).toString("base64");
 
             response = {
                 contents: encoded,
-                filename: ids[0] + ".swc"
+                filename: filenames[0] + ".swc"
             };
         } else {
             const tempFile = uuid.v4();
@@ -67,7 +58,7 @@ export class SwcExportCache extends ExportCacheBase {
             response = await new Promise(async (resolve) => {
                 const output = fs.createWriteStream(tempFile);
 
-                output.on("finish", () => {
+                output.on("close", () => {
                     const readData = fs.readFileSync(tempFile);
 
                     const encoded = readData.toString("base64");
@@ -76,7 +67,7 @@ export class SwcExportCache extends ExportCacheBase {
 
                     resolve({
                         contents: encoded,
-                        filename: "nmcp-export-data.zip"
+                        filename: `nmcp-export-swc-${moment().format("YYYY_MM_DD")}.zip`
                     });
                 });
 
@@ -84,12 +75,8 @@ export class SwcExportCache extends ExportCacheBase {
 
                 archive.pipe(output);
 
-                ids.forEach(id => {
-                    const data = this._cache.get(id);
-
-                    if (data) {
-                        archive.append(`# Generated ${moment().format("YYYY/MM/DD")}. \n` + data, {name: id + ".swc"});
-                    }
+                neurons.forEach((n, idx) => {
+                    archive.append(n, {name: filenames[idx] + ".swc"});
                 });
 
                 archive.finalize();
@@ -98,4 +85,29 @@ export class SwcExportCache extends ExportCacheBase {
 
         return response;
     }
+}
+
+function mapSomaIfPresent(nodes: any[]): string {
+    let soma = nodes.filter(n => n.parentNumber == -1);
+
+    if (soma.length > 0) {
+        return mapToSwc(soma, 1, 0);
+    }
+
+    return "";
+}
+
+function mapToSwc(nodes: any[], pathStructure: number, offset: number = 0): string {
+    return nodes.reduce((prev, node) => {
+        let sampleNumber = node.sampleNumber;
+        let parentNumber = node.parentNumber;
+
+        if (parentNumber !== 1) {
+            parentNumber += offset;
+        }
+
+        sampleNumber += offset;
+
+        return prev + `${sampleNumber}\t${pathStructure}\t${node.z.toFixed(6)}\t${node.y.toFixed(6)}\t${node.x.toFixed(6)}\t${node.radius.toFixed(6)}\t${parentNumber}\n`;
+    }, "");
 }
