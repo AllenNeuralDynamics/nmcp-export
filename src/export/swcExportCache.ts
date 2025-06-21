@@ -43,7 +43,7 @@ export class SwcExportCache extends ExportCacheBase {
     protected override async formatResponse(neurons: any[], filenames: string[]): Promise<IExportResponse> {
         let response: IExportResponse;
 
-        if (neurons.length === 1) {
+        if (neurons.length === 0) {
             let encoded = null;
 
             encoded = Buffer.from(neurons[0]).toString("base64");
@@ -78,6 +78,8 @@ export class SwcExportCache extends ExportCacheBase {
                 neurons.forEach((n, idx) => {
                     archive.append(n, {name: filenames[idx] + ".swc"});
                 });
+
+                archive.append(this._citation, {name: "CITATION.md"});
 
                 archive.finalize();
             });

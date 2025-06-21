@@ -2,6 +2,12 @@ import {apiClient} from "../data-access/apiClient";
 
 const debug = require("debug")("nmcp:export-api:cache");
 
+const citation = "If you use this data, please cite it as:\n" +
+    "\n" +
+    "> _Allen Institute for Neural Dynamics. (2025). Whole brain single neuron reconstructions. Available from: https://morphology.allenneuraldynamics.org._\n" +
+    "\n" +
+    "This dataset is freely available under the [CC BY 4.0 license](https://creativecommons.org/licenses/by/4.0/). You are welcome to use, share, and adapt the data, provided that appropriate credit is given by including the citation above. For more detail and examples, see https://alleninstitute.org/citation-policy/.\n";
+
 export enum ExportFormat {
     Swc = 0,
     Json = 1
@@ -16,7 +22,9 @@ export abstract class ExportCacheBase {
     protected _apiClient = apiClient;
 
     protected readonly _termsOfUse =
-        "Please consult Terms-of-Use at https://alleninstitute.org/division/neural-dynamics/ when referencing this reconstruction.";
+        "Please consult Terms-of-Use at https://morphology.allenneuraldynamics.org/ when referencing this reconstruction.";
+
+    protected readonly _citation = citation;
 
     private readonly _exportFormat: ExportFormat;
 
