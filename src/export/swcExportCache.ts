@@ -40,50 +40,39 @@ export class SwcExportCache extends ExportCacheBase {
         return content;
     }
 
-    protected override async formatResponse(neurons: any[], filenames: string[]): Promise<IExportResponse> {
+    protected override async formatResponse(neurons: any[], filenames: string[], collections: any[]): Promise<IExportResponse> {
         let response: IExportResponse;
 
-        if (neurons.length === 0) {
-            let encoded = null;
+        const tempFile = uuid.v4();
 
-            encoded = Buffer.from(neurons[0]).toString("base64");
+        response = await new Promise(async (resolve) => {
+            const output = fs.createWriteStream(tempFile);
 
-            response = {
-                contents: encoded,
-                filename: filenames[0] + ".swc"
-            };
-        } else {
-            const tempFile = uuid.v4();
+            output.on("close", () => {
+                const readData = fs.readFileSync(tempFile);
 
-            response = await new Promise(async (resolve) => {
-                const output = fs.createWriteStream(tempFile);
+                const encoded = readData.toString("base64");
 
-                output.on("close", () => {
-                    const readData = fs.readFileSync(tempFile);
+                fs.unlinkSync(tempFile);
 
-                    const encoded = readData.toString("base64");
-
-                    fs.unlinkSync(tempFile);
-
-                    resolve({
-                        contents: encoded,
-                        filename: `nmcp-export-swc-${moment().format("YYYY_MM_DD")}.zip`
-                    });
+                resolve({
+                    contents: encoded,
+                    filename: `nmcp-export-swc-${moment().format("YYYY_MM_DD")}.zip`
                 });
-
-                const archive = archiver("zip", {zlib: {level: 9}});
-
-                archive.pipe(output);
-
-                neurons.forEach((n, idx) => {
-                    archive.append(n, {name: filenames[idx] + ".swc"});
-                });
-
-                archive.append(this._citation, {name: "CITATION.md"});
-
-                archive.finalize();
             });
-        }
+
+            const archive = archiver("zip", {zlib: {level: 9}});
+
+            archive.pipe(output);
+
+            neurons.forEach((n, idx) => {
+                archive.append(n, {name: filenames[idx] + ".swc"});
+            });
+
+            archive.append(this._citation, {name: "CITATION.md"});
+
+            archive.finalize();
+        });
 
         return response;
     }

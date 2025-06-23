@@ -11,7 +11,14 @@ export class JsonExportCache extends ExportCacheBase {
         super(ExportFormat.Json);
     }
 
-    protected override async formatResponse(neurons: any[], filenames: string[]): Promise<IExportResponse> {
+    protected override formatReconstruction(data: any): any {
+        return JSON.stringify({
+            comment: `Generated: ${moment().format("YYYY/MM/DD")}.  ${this._termsOfUse}`,
+            neurons: [data]
+        });
+    }
+
+    protected override async formatResponse(neurons: any[], filenames: string[], collections: any[]): Promise<IExportResponse> {
         let response: IExportResponse;
 
         const tempFile = uuid.v4();
@@ -37,10 +44,7 @@ export class JsonExportCache extends ExportCacheBase {
             archive.pipe(output);
 
             neurons.forEach((n, idx) => {
-                archive.append(JSON.stringify({
-                    comment: `Generated: ${moment().format("YYYY/MM/DD")}.  ${this._termsOfUse}`,
-                    neurons: [n]
-                }), {name: filenames[idx] + ".json"});
+                archive.append(n, {name: filenames[idx] + ".json"});
             });
 
             archive.append(this._citation, {name: "CITATION.md"});

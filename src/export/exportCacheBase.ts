@@ -58,12 +58,18 @@ export abstract class ExportCacheBase {
             }
         });
 
+        const collections = new Map(neurons.map(n => [n.sample.collection.id, n.sample.collection]));
+
+        const uniqueCollectionIds = [... new Set(collections.keys())];
+
+        const uniqueCollections = uniqueCollectionIds.map(id => collections.get(id));
+
         const neuronData = neurons.map(n => this.formatReconstruction(n));
 
-        return this.formatResponse(neuronData, filenames);
+        return this.formatResponse(neuronData, filenames, uniqueCollections);
     }
 
-    protected async formatResponse(neurons: any[], filename: string[]): Promise<IExportResponse> {
+    protected async formatResponse(neurons: any[], filename: string[], collections: any[]): Promise<IExportResponse> {
         return Promise.resolve({
             contents: neurons,
             filename: "nmcp-export.json"
