@@ -1,7 +1,4 @@
-import * as fs from "fs";
-import * as archiver from "archiver";
-import * as uuid from "uuid";
-import {ExportFormat, ExportCacheBase, IExportResponse} from "./exportCacheBase";
+import {ExportFormat, ExportCacheBase} from "./exportCacheBase";
 import moment = require("moment");
 
 export class SwcExportCache extends ExportCacheBase {
@@ -38,43 +35,6 @@ export class SwcExportCache extends ExportCacheBase {
         }
 
         return content;
-    }
-
-    protected override async formatResponse(neurons: any[], filenames: string[], collections: any[]): Promise<IExportResponse> {
-        let response: IExportResponse;
-
-        const tempFile = uuid.v4();
-
-        response = await new Promise(async (resolve) => {
-            const output = fs.createWriteStream(tempFile);
-
-            output.on("close", () => {
-                const readData = fs.readFileSync(tempFile);
-
-                const encoded = readData.toString("base64");
-
-                fs.unlinkSync(tempFile);
-
-                resolve({
-                    contents: encoded,
-                    filename: `nmcp-export-swc-${moment().format("YYYY_MM_DD")}.zip`
-                });
-            });
-
-            const archive = archiver("zip", {zlib: {level: 9}});
-
-            archive.pipe(output);
-
-            neurons.forEach((n, idx) => {
-                archive.append(n, {name: filenames[idx] + ".swc"});
-            });
-
-            archive.append(this._citation, {name: "CITATION.md"});
-
-            archive.finalize();
-        });
-
-        return response;
     }
 }
 
