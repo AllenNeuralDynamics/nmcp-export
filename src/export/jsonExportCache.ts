@@ -8,10 +8,18 @@ export class JsonExportCache extends ExportCacheBase {
         super(ExportFormat.Json);
     }
 
-    protected override formatReconstruction(data: any): any {
-        return JSON.stringify({
+    protected override formatReconstruction(data: any, requireString: boolean = true): any {
+        const content = {
             comment: `Generated: ${moment().format("YYYY/MM/DD")}.  ${this._termsOfUse}`,
             neurons: [data]
-        });
+        };
+
+        if (requireString) {
+            return JSON.stringify(content);
+        } else {
+            return content;
+        }
     }
 }
+
+export const JsonExport = new JsonExportCache();

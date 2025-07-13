@@ -6,7 +6,7 @@ export class SwcExportCache extends ExportCacheBase {
         super(ExportFormat.Swc);
     }
 
-    protected override formatReconstruction(data: any): any {
+    protected override formatReconstruction(data: any, requireString: boolean = true): any {
         let content = `# Generated: ${moment().format("YYYY/MM/DD")}\n`
             + `# DOI:\t\t\t\t\t${data.doi || "n/a"}\n`
             + `# Neuron Id:\t\t\t${data.idString}\n`
@@ -62,3 +62,5 @@ function mapToSwc(nodes: any[], pathStructure: number, offset: number = 0): stri
         return prev + `${sampleNumber}\t${pathStructure}\t${node.z.toFixed(6)}\t${node.y.toFixed(6)}\t${node.x.toFixed(6)}\t${node.radius.toFixed(6)}\t${parentNumber}\n`;
     }, "");
 }
+
+export const SwcExport = new SwcExportCache();

@@ -7,6 +7,7 @@ const debug = require("debug")("nmcp:export-api:server");
 
 import {ServiceOptions} from "./options/serviceOptions";
 import {exportMiddleware} from "./middleware/exportMiddleware";
+import {downloadMiddleware} from "./middleware/downloadMiddleware";
 
 const app = express();
 
@@ -15,6 +16,8 @@ app.use(bodyParser.urlencoded({extended: true}));
 app.use(bodyParser.json());
 
 app.use("/export", exportMiddleware);
+
+app.use("/download", downloadMiddleware);
 
 const server = createServer(app);
 

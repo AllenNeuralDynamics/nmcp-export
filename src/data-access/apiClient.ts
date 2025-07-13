@@ -12,7 +12,7 @@ export class ApiClient {
     constructor() {
         const url = `http://${ServiceOptions.apiService.host}:${ServiceOptions.apiService.port}${ServiceOptions.apiService.graphQLEndpoint}`;
 
-        const httpLink = new HttpLink({ uri: url });
+        const httpLink = new HttpLink({uri: url});
 
         const authMiddleware = new ApolloLink((operation, forward) => {
             // add the authorization to the headers
@@ -37,6 +37,29 @@ export class ApiClient {
         try {
             const result = await this._client.query({
                 query: gql`
+                    query ReconstructionData($id: String!){
+                        reconstructionData(id: $id)
+                    }`,
+                variables: {id: id},
+                fetchPolicy: "network-only"
+            });
+
+            const data = result?.data?.reconstructionData || null;
+
+            const obj = data ? JSON.parse(data) : null;
+
+            return obj && obj.neurons && obj.neurons.length > 0 ? obj.neurons[0] : null;
+        } catch (err) {
+            debug(err);
+        }
+
+        return null;
+    }
+
+    public async queryNeuron(id: string): Promise<object> {
+        try {
+            const result = await this._client.query({
+                query: gql`
                     query NeuronReconstructionData($id: String!){
                         neuronReconstructionData(id: $id)
                     }`,
@@ -48,7 +71,7 @@ export class ApiClient {
 
             const obj = data ? JSON.parse(data) : null;
 
-            return obj && obj.neurons &&obj.neurons.length > 0 ? obj.neurons[0] : null;
+            return obj && obj.neurons && obj.neurons.length > 0 ? obj.neurons[0] : null;
         } catch (err) {
             debug(err);
         }

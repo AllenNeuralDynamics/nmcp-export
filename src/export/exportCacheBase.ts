@@ -51,6 +51,26 @@ export abstract class ExportCacheBase {
         }
     }
 
+    public async findContent(id: string): Promise<any> {
+        if (!id || id.length === 0) {
+            debug(`null or empty id request`);
+            return null;
+        }
+
+        debug(`handling request for id: ${id}`);
+
+        const data: any = await this.getReconstructionData(id);
+
+        if (data) {
+            return {
+                filename: `${data.idString}-${data.sample.subject}.${this.formatName()}`,
+                content: this.formatReconstruction(data, false)
+            };
+        }
+
+        return null;
+    }
+
     public async findContents(ids: string[]): Promise<IExportResponse> {
         if (!ids || ids.length === 0) {
             debug(`null or empty id request`);
@@ -60,7 +80,7 @@ export abstract class ExportCacheBase {
         debug(`handling request for ids: ${ids.join(", ")}`);
 
         const neuronPromises = ids.map(async (id: string): Promise<any> => {
-            return await this.getData(id);
+            return await this.getNeuronData(id);
         });
 
         const neurons = (await Promise.all(neuronPromises)).filter(n => n);
@@ -143,11 +163,15 @@ export abstract class ExportCacheBase {
         return response;
     }
 
-    protected formatReconstruction(data: any): any {
+    protected formatReconstruction(data: any, requireString: boolean = true): any {
         return data;
     }
 
-    private async getData(id: string): Promise<object> {
+    private async getNeuronData(id: string): Promise<object> {
+        return this._apiClient.queryNeuron(id);
+    }
+
+    private async getReconstructionData(id: string): Promise<object> {
         return this._apiClient.queryReconstruction(id);
     }
 
