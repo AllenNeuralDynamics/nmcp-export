@@ -10,11 +10,11 @@ export class SwcExportCache extends ExportCacheBase {
         let content = `# Generated: ${moment().format("YYYY/MM/DD")}\n`
             + `# DOI:\t\t\t\t\t${data.doi || "n/a"}\n`
             + `# Neuron Id:\t\t\t${data.idString}\n`
-            + `# Sample Date:\t\t\t${data.sample.sampleDate}\n`
+            + `# Sample Date:\t\t\t${data.sample.date}\n`
             + `# Sample Subject:\t\t${data.sample.subject}\n`
-            + `# Sample Strain:\t\t${data.sample.genotype}\n`
-            + `# Label Virus:\t\t\t${data.sample.virus}\n`
-            + `# Label Fluorophore:\t${data.sample.fluorophore}\n`
+            + `# Sample Strain:\t\t${data.sample.genotype ?? ""}\n`
+            + `# Label Virus:\t\t\t${data.label?.virus ?? ""}\n`
+            + `# Label Fluorophore:\t${data.label?.fluorophore ?? ""}\n`
             + `# Annotation Space:\t\tCCFv3.0 Axes> X: Anterior-Posterior; Y: Inferior-Superior; Z:Left-Right\n`
             + `# ${this._termsOfUse}\n`;
 

@@ -1,4 +1,5 @@
-import {ApolloClient, ApolloLink, concat, HttpLink, InMemoryCache} from '@apollo/client/core';
+import {ApolloClient, ApolloLink, concat, HttpLink, InMemoryCache} from "@apollo/client/core";
+import {removeTypenameFromVariables} from "@apollo/client/link/remove-typename";
 
 import {gql} from "graphql-tag";
 
@@ -27,8 +28,16 @@ export class ApiClient {
 
         debug(`creating apollo client for api service ${url}`);
 
+        const removeTypenameLink = removeTypenameFromVariables();
+
+        const link = ApolloLink.from([
+            authMiddleware,
+            removeTypenameLink,
+            httpLink
+        ]);
+
         this._client = new ApolloClient({
-            link: concat(authMiddleware, httpLink),
+            link: link,
             cache: new InMemoryCache()
         });
     }
@@ -37,39 +46,77 @@ export class ApiClient {
         try {
             const result = await this._client.query({
                 query: gql`
-                    query ReconstructionData($id: String!){
-                        reconstructionData(id: $id)
+                    query ReconstructionAsJSON($id: String!, $options: PortalReconstructionInput){
+                        reconstructionAsJSON(id: $id, options: $options){
+                            comment
+                            neurons {
+                                id
+                                idString
+                                DOI
+                                soma {
+                                    x
+                                    y
+                                    z
+                                    allenId
+                                }
+                                sample {
+                                    subject
+                                    date
+                                    genotype
+                                    collection {
+                                        id
+                                        name
+                                    }
+                                }
+                                label {
+                                    virus
+                                    fluorophore
+                                }
+                                annotator
+                                peerReviewer
+                                proofreader
+                                axon {
+                                    x
+                                    y
+                                    z
+                                    radius
+                                    sampleNumber
+                                    parentNumber
+                                    allenId
+                                    structureIdentifier
+                                }
+                                axonChunkInfo {
+                                    totalCount
+                                    offset
+                                    limit
+                                    hasMore
+                                }
+                                dendrite {
+                                    x
+                                    y
+                                    z
+                                    radius
+                                    sampleNumber
+                                    parentNumber
+                                    allenId
+                                    structureIdentifier
+                                }
+                                dendriteChunkInfo {
+                                    totalCount
+                                    offset
+                                    limit
+                                    hasMore
+                                }
+                            }
+                        }
                     }`,
                 variables: {id: id},
                 fetchPolicy: "network-only"
             });
 
-            const data = result?.data?.reconstructionData || null;
+            const obj = result?.data?.reconstructionAsJSON || null;
 
-            const obj = data ? JSON.parse(data) : null;
-
-            return obj && obj.neurons && obj.neurons.length > 0 ? obj.neurons[0] : null;
-        } catch (err) {
-            debug(err);
-        }
-
-        return null;
-    }
-
-    public async queryNeuron(id: string): Promise<object> {
-        try {
-            const result = await this._client.query({
-                query: gql`
-                    query NeuronReconstructionData($id: String!){
-                        neuronReconstructionData(id: $id)
-                    }`,
-                variables: {id: id},
-                fetchPolicy: "network-only"
-            });
-
-            const data = result?.data?.neuronReconstructionData || null;
-
-            const obj = data ? JSON.parse(data) : null;
+            // const obj = data ? JSON.parse(data) : null;
 
             return obj && obj.neurons && obj.neurons.length > 0 ? obj.neurons[0] : null;
         } catch (err) {

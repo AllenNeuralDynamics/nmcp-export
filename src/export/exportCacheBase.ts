@@ -64,7 +64,7 @@ export abstract class ExportCacheBase {
         if (data) {
             return {
                 filename: `${data.idString}-${data.sample.subject}.${this.formatName()}`,
-                content: this.formatReconstruction(data, false)
+                content: this.formatReconstruction(data)
             };
         }
 
@@ -79,11 +79,13 @@ export abstract class ExportCacheBase {
 
         debug(`handling request for ids: ${ids.join(", ")}`);
 
-        const neuronPromises = ids.map(async (id: string): Promise<any> => {
-            return await this.getNeuronData(id);
-        });
+        const jsonContent = [];
 
-        const neurons = (await Promise.all(neuronPromises)).filter(n => n);
+        for (const id of ids.filter(id => id)) {
+            jsonContent.push(await this.getReconstructionData(id));
+        }
+
+        const neurons = jsonContent.filter(n => n);
 
         const filenames = neurons.map(n => {
             if (n.idString && n.sample) {
@@ -95,31 +97,24 @@ export abstract class ExportCacheBase {
 
         const neuronData = neurons.map(n => this.formatReconstruction(n));
 
-        const collections = new Map(neurons.map(n => [n.sample.collection.id, n.sample.collection]));
+        const collections = new Map<string, {id: string, name: string}>(neurons.map(n => [n.sample.collection.id, n.sample.collection]));
 
         const uniqueCollectionIds = [...new Set(collections.keys())];
 
         const uniqueCollections = uniqueCollectionIds.map(id => collections.get(id));
 
-        const collectionMap = new Map(uniqueCollections.map(c => [c.id, {...c, neurons: []}]));
+        const collectionMap = new Map<string, {id: string, name: string, neurons: any[]}>(uniqueCollections.map(c => [c.id, {...c, neurons: []}]));
 
         neurons.forEach(n => {
             const c = collectionMap.get(n.sample.collection.id);
-            c.neurons.push(n.idString);
+            c.neurons.push(n);
         });
 
-        const annotators = new Map(neurons.filter(n => n.annotator).map(n => [n.annotator.id, `${n.annotator.firstName} ${n.annotator.lastName}`]));
+        const uniqueAnnotators = [...new Set(neurons.map(n => n.annotator))].filter(a => a);
+        const proofreaders = [...new Set(neurons.map(n => n.peerReviewer))].filter(r => r);
+        const peerReviewers = [...new Set(neurons.map(n => n.proofreader))].filter(r => r);
 
-        const uniqueAnnotatorIds = [...new Set(annotators.keys())].filter(id => id);
-
-        const uniqueAnnotators = uniqueAnnotatorIds.map(id => annotators.get(id));
-
-        const proofreaders = new Map(neurons.filter(n => n.proofreader).map(n => [n.proofreader.id, `${n.proofreader.firstName} ${n.proofreader.lastName}`]));
-        const peerReviewers = new Map(neurons.filter(n => n.peerReviewer).map(n => [n.peerReviewer.id, `${n.peerReviewer.firstName} ${n.peerReviewer.lastName}`]));
-
-        const uniqueProofreadIds = [...new Set([...proofreaders.keys(), ...peerReviewers.keys()])].filter(id => id);
-
-        const uniqueProofreaders = uniqueProofreadIds.map(id => proofreaders.get(id) || peerReviewers.get(id)).filter(p => p);
+        const uniqueProofreaders = [...new Set([...peerReviewers, ...proofreaders])];
 
         const citation = this.createCitationContent(Array.from(collectionMap.values()), uniqueAnnotators, uniqueProofreaders);
 
@@ -163,12 +158,8 @@ export abstract class ExportCacheBase {
         return response;
     }
 
-    protected formatReconstruction(data: any, requireString: boolean = true): any {
+    protected formatReconstruction(data: any): any {
         return data;
-    }
-
-    private async getNeuronData(id: string): Promise<object> {
-        return this._apiClient.queryNeuron(id);
     }
 
     private async getReconstructionData(id: string): Promise<object> {
@@ -180,8 +171,8 @@ export abstract class ExportCacheBase {
 
         collections.forEach(c => {
             content += `\n\n#### These reconstructions are part of the ${c.name} collection\n\n`;
-            c.neurons.forEach((n: string) => {
-                content += `* ${n}\n`;
+            c.neurons.forEach((n: any) => {
+                content += `* ${n.idString}-${n.sample.subject}\n`;
             })
         });
 
