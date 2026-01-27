@@ -46,8 +46,8 @@ export class ApiClient {
         try {
             const result = await this._client.query({
                 query: gql`
-                    query ReconstructionAsJSON($id: String!, $options: PortalReconstructionInput){
-                        reconstructionAsJSON(id: $id, options: $options){
+                    query reconstructionAsJson($id: String!, $options: PortalReconstructionInput){
+                        reconstructionAsJson(id: $id, options: $options){
                             comment
                             neurons {
                                 id
@@ -114,7 +114,7 @@ export class ApiClient {
                 fetchPolicy: "network-only"
             });
 
-            const obj = result?.data?.reconstructionAsJSON || null;
+            const obj = result?.data?.reconstructionAsJson || null;
 
             // const obj = data ? JSON.parse(data) : null;
 

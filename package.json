@@ -1,6 +1,6 @@
 {
   "name": "nmcp-export",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "main": "dist/app.js",
   "repository": "https://github.com/AllenNeuralDynamics/nmcp-export.git",
   "author": "Patrick Edson <pedson@leapscientific.com>",
