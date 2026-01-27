@@ -17,6 +17,11 @@ export enum ExportFormat {
     Json = 1
 }
 
+export enum ReconstructionSpace {
+    Specimen = 0,
+    Atlas = 1
+}
+
 export interface IExportResponse {
     contents: any;
     filename: string;
@@ -59,7 +64,7 @@ export abstract class ExportCacheBase {
 
         debug(`handling request for id: ${id}`);
 
-        const data: any = await this.getReconstructionData(id);
+        const data: any = await this.getAtlasReconstructionData(id);
 
         if (data) {
             return {
@@ -71,7 +76,7 @@ export abstract class ExportCacheBase {
         return null;
     }
 
-    public async findContents(ids: string[]): Promise<IExportResponse> {
+    public async findContents(ids: string[], space: ReconstructionSpace): Promise<IExportResponse> {
         if (!ids || ids.length === 0) {
             debug(`null or empty id request`);
             return;
@@ -82,7 +87,11 @@ export abstract class ExportCacheBase {
         const jsonContent = [];
 
         for (const id of ids.filter(id => id)) {
-            jsonContent.push(await this.getReconstructionData(id));
+            if (space == ReconstructionSpace.Atlas) {
+                jsonContent.push(await this.getAtlasReconstructionData(id));
+            } else {
+                jsonContent.push(await this.getSpecimenSpaceReconstructionData(id));
+            }
         }
 
         const neurons = jsonContent.filter(n => n);
@@ -162,8 +171,12 @@ export abstract class ExportCacheBase {
         return data;
     }
 
-    private async getReconstructionData(id: string): Promise<object> {
-        return this._apiClient.queryReconstruction(id);
+    private async getAtlasReconstructionData(id: string): Promise<object> {
+        return this._apiClient.queryAtlasReconstruction(id);
+    }
+
+    private async getSpecimenSpaceReconstructionData(id: string): Promise<object> {
+        return this._apiClient.querySpecimenSpaceReconstruction(id);
     }
 
     protected createCitationContent(collections: any[], annotators: string[], proofreaders: string[]): string {

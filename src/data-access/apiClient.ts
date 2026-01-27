@@ -42,7 +42,7 @@ export class ApiClient {
         });
     }
 
-    public async queryReconstruction(id: string): Promise<object> {
+    public async queryAtlasReconstruction(id: string): Promise<object> {
         try {
             const result = await this._client.query({
                 query: gql`
@@ -115,6 +115,73 @@ export class ApiClient {
             });
 
             const obj = result?.data?.reconstructionAsJson || null;
+
+            // const obj = data ? JSON.parse(data) : null;
+
+            return obj && obj.neurons && obj.neurons.length > 0 ? obj.neurons[0] : null;
+        } catch (err) {
+            debug(err);
+        }
+
+        return null;
+    }
+
+    public async querySpecimenSpaceReconstruction(id: string): Promise<object> {
+        try {
+            const result = await this._client.query({
+                query: gql`
+                    query specimenSpaceReconstructionAsJson($id: String!){
+                        specimenSpaceReconstructionAsJson(id: $id){
+                            comment
+                            neurons {
+                                id
+                                idString
+                                DOI
+                                soma {
+                                    x
+                                    y
+                                    z
+                                }
+                                sample {
+                                    subject
+                                    date
+                                    genotype
+                                    collection {
+                                        id
+                                        name
+                                    }
+                                }
+                                label {
+                                    virus
+                                    fluorophore
+                                }
+                                annotator
+                                axon {
+                                    x
+                                    y
+                                    z
+                                    radius
+                                    sampleNumber
+                                    parentNumber
+                                    structureIdentifier
+                                }
+                                dendrite {
+                                    x
+                                    y
+                                    z
+                                    radius
+                                    sampleNumber
+                                    parentNumber
+                                    structureIdentifier
+                                }
+                            }
+                        }
+                    }`,
+                variables: {id: id},
+                fetchPolicy: "network-only"
+            });
+
+            const obj = result?.data?.specimenSpaceReconstructionAsJson || null;
 
             // const obj = data ? JSON.parse(data) : null;
 
