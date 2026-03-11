@@ -1,12 +1,12 @@
 {
   "name": "nmcp-export",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "main": "dist/app.js",
   "repository": "https://github.com/AllenNeuralDynamics/nmcp-export.git",
   "author": "Patrick Edson <pedson@leapscientific.com>",
   "license": "SEE LICENSE IN LICENSE",
   "scripts": {
-    "debug": "tsc && node --trace-warnings --max-old-space-size=8192 --optimize-for-size src/app.js",
+    "debug": "tsc && node --trace-warnings --max-old-space-size=8192 --max-semi-space-size=64 --gc-interval=100 --optimize-for-size src/app.js",
     "express": "node dist/app.js"
   },
   "dependencies": {
