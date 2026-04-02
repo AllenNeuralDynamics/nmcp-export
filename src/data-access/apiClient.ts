@@ -111,7 +111,7 @@ export class ApiClient {
                         }
                     }`,
                 variables: {id: id},
-                fetchPolicy: "network-only"
+                fetchPolicy: "no-cache"
             });
 
             const obj = result?.data?.reconstructionAsJson || null;
@@ -178,7 +178,7 @@ export class ApiClient {
                         }
                     }`,
                 variables: {id: id},
-                fetchPolicy: "network-only"
+                fetchPolicy: "no-cache"
             });
 
             const obj = result?.data?.specimenSpaceReconstructionAsJson || null;

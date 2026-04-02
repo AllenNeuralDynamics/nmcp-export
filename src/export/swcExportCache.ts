@@ -59,7 +59,7 @@ function mapToSwc(nodes: any[], pathStructure: number, offset: number = 0): stri
 
         sampleNumber += offset;
 
-        return prev + `${sampleNumber}\t${pathStructure}\t${node.x.toFixed(6)}\t${node.y.toFixed(6)}\t${node.z.toFixed(6)}\t${node.radius.toFixed(6)}\t${parentNumber}\n`;
+        return prev + `${sampleNumber} ${pathStructure} ${node.x.toFixed(6)} ${node.y.toFixed(6)} ${node.z.toFixed(6)} ${node.radius.toFixed(6)} ${parentNumber}\n`;
     }, "");
 }
 
