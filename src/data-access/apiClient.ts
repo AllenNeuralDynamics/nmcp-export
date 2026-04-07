@@ -1,14 +1,20 @@
-import {ApolloClient, ApolloLink, concat, HttpLink, InMemoryCache} from "@apollo/client/core";
+import {ApolloClient, ApolloLink, HttpLink, InMemoryCache, NormalizedCacheObject} from "@apollo/client/core";
 import {removeTypenameFromVariables} from "@apollo/client/link/remove-typename";
-
-import {gql} from "graphql-tag";
 
 const debug = require("debug")("nmcp:export-api:api-client");
 
 import {ServiceOptions} from "../options/serviceOptions";
+import {PortalReconstruction} from "../io/portalJson";
+import {
+    EXPORTED_SPECIMEN_RECONSTRUCTION_QUERY,
+    ExportedSpecimenReconstructionResponse,
+    ExportedSpecimenReconstructionVariables
+} from "./graphql/specimenReconstruction";
+import {EXPORTED_ATLAS_RECONSTRUCTION_QUERY, ExportedAtlasReconstructionResponse, ExportedAtlasReconstructionVariables} from "./graphql/atlasReconstruction";
+import {ApiAtlasStructure, ATLAS_STRUCTURE_QUERY, AtlasStructureQueryResponse} from "./graphql/atlasStructure";
 
 export class ApiClient {
-    private _client: any;
+    private _client: ApolloClient<NormalizedCacheObject>;
 
     constructor() {
         const url = `http://${ServiceOptions.apiService.host}:${ServiceOptions.apiService.port}${ServiceOptions.apiService.graphQLEndpoint}`;
@@ -16,7 +22,6 @@ export class ApiClient {
         const httpLink = new HttpLink({uri: url});
 
         const authMiddleware = new ApolloLink((operation, forward) => {
-            // add the authorization to the headers
             operation.setContext({
                 headers: {
                     authorization: ServiceOptions.apiService.authentication
@@ -38,87 +43,19 @@ export class ApiClient {
 
         this._client = new ApolloClient({
             link: link,
-            cache: new InMemoryCache()
+            cache: new InMemoryCache({addTypename: false})
         });
     }
 
-    public async queryAtlasReconstruction(id: string): Promise<object> {
+    public async queryAtlasReconstruction(id: string): Promise<PortalReconstruction> {
         try {
-            const result = await this._client.query({
-                query: gql`
-                    query reconstructionAsJson($id: String!, $options: PortalReconstructionInput){
-                        reconstructionAsJson(id: $id, options: $options){
-                            comment
-                            neurons {
-                                id
-                                idString
-                                DOI
-                                soma {
-                                    x
-                                    y
-                                    z
-                                    allenId
-                                }
-                                sample {
-                                    subject
-                                    date
-                                    genotype
-                                    collection {
-                                        id
-                                        name
-                                    }
-                                }
-                                label {
-                                    virus
-                                    fluorophore
-                                }
-                                annotator
-                                peerReviewer
-                                proofreader
-                                axon {
-                                    x
-                                    y
-                                    z
-                                    radius
-                                    sampleNumber
-                                    parentNumber
-                                    allenId
-                                    structureIdentifier
-                                }
-                                axonChunkInfo {
-                                    totalCount
-                                    offset
-                                    limit
-                                    hasMore
-                                }
-                                dendrite {
-                                    x
-                                    y
-                                    z
-                                    radius
-                                    sampleNumber
-                                    parentNumber
-                                    allenId
-                                    structureIdentifier
-                                }
-                                dendriteChunkInfo {
-                                    totalCount
-                                    offset
-                                    limit
-                                    hasMore
-                                }
-                            }
-                        }
-                    }`,
+            const {data} = await this._client.query<ExportedAtlasReconstructionResponse, ExportedAtlasReconstructionVariables>({
+                query: EXPORTED_ATLAS_RECONSTRUCTION_QUERY,
                 variables: {id: id},
                 fetchPolicy: "no-cache"
             });
 
-            const obj = result?.data?.reconstructionAsJson || null;
-
-            // const obj = data ? JSON.parse(data) : null;
-
-            return obj && obj.neurons && obj.neurons.length > 0 ? obj.neurons[0] : null;
+            return data?.exportedAtlasReconstruction || null;
         } catch (err) {
             debug(err);
         }
@@ -126,66 +63,30 @@ export class ApiClient {
         return null;
     }
 
-    public async querySpecimenSpaceReconstruction(id: string): Promise<object> {
+    public async querySpecimenSpaceReconstruction(id: string): Promise<PortalReconstruction> {
         try {
-            const result = await this._client.query({
-                query: gql`
-                    query specimenSpaceReconstructionAsJson($id: String!){
-                        specimenSpaceReconstructionAsJson(id: $id){
-                            comment
-                            neurons {
-                                id
-                                idString
-                                DOI
-                                soma {
-                                    x
-                                    y
-                                    z
-                                }
-                                sample {
-                                    subject
-                                    date
-                                    genotype
-                                    collection {
-                                        id
-                                        name
-                                    }
-                                }
-                                label {
-                                    virus
-                                    fluorophore
-                                }
-                                annotator
-                                axon {
-                                    x
-                                    y
-                                    z
-                                    radius
-                                    sampleNumber
-                                    parentNumber
-                                    structureIdentifier
-                                }
-                                dendrite {
-                                    x
-                                    y
-                                    z
-                                    radius
-                                    sampleNumber
-                                    parentNumber
-                                    structureIdentifier
-                                }
-                            }
-                        }
-                    }`,
+            const {data} = await this._client.query<ExportedSpecimenReconstructionResponse, ExportedSpecimenReconstructionVariables>({
+                query: EXPORTED_SPECIMEN_RECONSTRUCTION_QUERY,
                 variables: {id: id},
                 fetchPolicy: "no-cache"
             });
 
-            const obj = result?.data?.specimenSpaceReconstructionAsJson || null;
+            return data?.exportedSpecimenReconstruction || null;
+        } catch (err) {
+            debug(err);
+        }
 
-            // const obj = data ? JSON.parse(data) : null;
+        return null;
+    }
 
-            return obj && obj.neurons && obj.neurons.length > 0 ? obj.neurons[0] : null;
+    public async queryAtlasStructures(): Promise<ApiAtlasStructure[]> {
+        try {
+            const {data} = await this._client.query<AtlasStructureQueryResponse>({
+                query: ATLAS_STRUCTURE_QUERY,
+                fetchPolicy: "no-cache"
+            });
+
+            return data?.atlasStructures || null;
         } catch (err) {
             debug(err);
         }

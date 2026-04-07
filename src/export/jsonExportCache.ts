@@ -1,24 +1,13 @@
-import moment = require("moment");
-
-import {ExportFormat} from "./exportCacheBase";
-import {ExportCacheBase} from "./exportCacheBase";
+import {ExportCacheBase, ExportFormat} from "./exportCacheBase";
+import {PortalReconstruction} from "../io/portalJson";
 
 export class JsonExportCache extends ExportCacheBase {
     public constructor() {
-        super(ExportFormat.Json);
+        super(ExportFormat.PortalJson);
     }
 
-    protected override formatReconstruction(data: any, requireString: boolean = true): any {
-        const content = {
-            comment: `Generated: ${moment().format("YYYY/MM/DD")}.  ${this._termsOfUse}`,
-            neurons: [data]
-        };
-
-        if (requireString) {
-            return JSON.stringify(content);
-        } else {
-            return content;
-        }
+    protected override formatReconstruction(reconstruction: PortalReconstruction, asString: boolean = true): any {
+        return asString ? JSON.stringify(reconstruction) :  reconstruction;
     }
 }
 
