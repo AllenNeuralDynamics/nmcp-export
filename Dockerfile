@@ -1,4 +1,4 @@
-FROM node:24.1
+FROM node:24.10
 
 WORKDIR /app
 
@@ -6,6 +6,7 @@ COPY dist .
 
 RUN npm install --production=true
 
-CMD ["./docker-entry.sh"]
+ENTRYPOINT []
+CMD ["bash", "./docker-entry.sh"]
 
 EXPOSE  5000
