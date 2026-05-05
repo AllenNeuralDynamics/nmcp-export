@@ -27,16 +27,22 @@ export class LegacyJsonExportCache extends ExportCacheBase {
 
         const soma = this.mapJsonNode(reconstruction.nodes.find(n => n.structure == 1));
 
+        const dendrite = this.mapJsonNodes(reconstruction.nodes.filter(n => n.structure == 3));
+        const lastDendriteIndex = dendrite.length > 0 ? dendrite[dendrite.length - 1].sampleNumber : 0;
+
+        dendrite.unshift(soma);
+        reparentedSoma ||= this.reindexNodes(dendrite);
+
         const axon = this.mapJsonNodes(reconstruction.nodes.filter(n => n.structure == 2));
         if (axon.length > 0 && axon[0].parentNumber != 1) {
             axon[0].parentNumber = 1;
         }
-        axon.unshift(soma);
-        reparentedSoma ||= this.reindexNodes(axon);
 
-        const dendrite = this.mapJsonNodes(reconstruction.nodes.filter(n => n.structure == 3));
-        dendrite.unshift(soma);
-        reparentedSoma ||= this.reindexNodes(dendrite);
+        const axonOffset = axon.length > 0 && dendrite.length > 1 && axon[0].sampleNumber > dendrite[1].sampleNumber
+            ? lastDendriteIndex : 0;
+
+        axon.unshift(soma);
+        reparentedSoma ||= this.reindexNodes(axon, axonOffset);
 
         const allenInformation = atlasStructureRepository.getStructures(reconstruction.nodes.map(n => n.atlasStructure));
 
@@ -102,7 +108,7 @@ export class LegacyJsonExportCache extends ExportCacheBase {
         }
     }
 
-    private reindexNodes(nodes: PortalJsonNode[]): boolean {
+    private reindexNodes(nodes: PortalJsonNode[], offset: number = 0): boolean {
         let reparentSomaRequired = false;
 
         const nodeMap = new Map<number, number>();
@@ -114,11 +120,16 @@ export class LegacyJsonExportCache extends ExportCacheBase {
 
         nodes.forEach(node => {
             if (node.parentNumber != -1) {
-                if (nodeMap.has(node.parentNumber)) {
-                    node.parentNumber = nodeMap.get(node.parentNumber);
+                if (node.parentNumber <= offset) {
+                    node.parentNumber = 1;
                 } else {
-                    debug(`setting missing parent index ${node.parentNumber} to 1`);
-                    reparentSomaRequired = true;
+                    if (nodeMap.has(node.parentNumber)) {
+                        node.parentNumber = nodeMap.get(node.parentNumber);
+                    } else {
+                        debug(`setting missing parent index ${node.parentNumber} to 1`);
+                        node.parentNumber = 1;
+                        reparentSomaRequired = true;
+                    }
                 }
             }
         });
