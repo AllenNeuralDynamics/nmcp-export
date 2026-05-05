@@ -28,6 +28,9 @@ export class LegacyJsonExportCache extends ExportCacheBase {
         const soma = this.mapJsonNode(reconstruction.nodes.find(n => n.structure == 1));
 
         const axon = this.mapJsonNodes(reconstruction.nodes.filter(n => n.structure == 2));
+        if (axon.length > 0 && axon[0].parentNumber != 1) {
+            axon[0].parentNumber = 1;
+        }
         axon.unshift(soma);
         reparentedSoma ||= this.reindexNodes(axon);
 
