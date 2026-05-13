@@ -2,6 +2,7 @@ import {ExportCache, ExportFormat, ReconstructionSpace} from "../export/exportCa
 import {SwcExport} from "../export/swcExportCache";
 import {LegacyJsonExport} from "../export/legacyJsonExportCache";
 import {JsonExport} from "../export/jsonExportCache";
+import {ParquetExport} from "../export/parquetExportCache";
 import {atlasStructureRepository} from "../data-access/atlasStructure";
 
 export async function exportMiddleware(req: any, res: any, next: any) {
@@ -15,6 +16,10 @@ export async function exportMiddleware(req: any, res: any, next: any) {
             break;
         case ExportFormat.PortalJson:
             source = JsonExport
+            break;
+        case ExportFormat.Parquet:
+            await ParquetExport.ensureImport();
+            source = ParquetExport;
             break;
         case ExportFormat.LegacyJson:
             await atlasStructureRepository.loadStructureMap();

@@ -1,13 +1,14 @@
 {
   "name": "nmcp-export",
-  "version": "3.0.5",
+  "version": "3.0.6",
   "main": "dist/app.js",
   "repository": "https://github.com/AllenNeuralDynamics/nmcp-export.git",
   "author": "Patrick Edson <pedson@leapscientific.com>",
   "license": "SEE LICENSE IN LICENSE",
   "scripts": {
     "debug": "tsc && node --trace-warnings --max-old-space-size=8192 --max-semi-space-size=64 --gc-interval=100 --optimize-for-size src/app.js",
-    "express": "node dist/app.js"
+    "express": "node dist/app.js",
+    "test": "vitest run"
   },
   "dependencies": {
     "@apollo/client": "^3.11.3",
@@ -15,6 +16,7 @@
     "body-parser": "^1.17.2",
     "debug": "^2.6.8",
     "express": "^4.15.3",
+    "hyparquet-writer": "^0.15.1",
     "moment": "^2.19.1",
     "uuid": "^3.1.0"
   },
@@ -26,6 +28,11 @@
     "@types/lodash": "^4.14.64",
     "@types/node": "^25.5.0",
     "@types/uuid": "^3.4.3",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^4"
+  },
+  "overrides": {
+    "rollup": "npm:@rollup/wasm-node",
+    "esbuild": "npm:esbuild-wasm"
   }
 }

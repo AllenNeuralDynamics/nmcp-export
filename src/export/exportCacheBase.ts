@@ -17,6 +17,7 @@ const citation = "If you use this data, please cite it as:\n" +
 export enum ExportFormat {
     Swc = 100,
     PortalJson = 300,
+    Parquet = 400,
     LegacyJson = 900
 }
 
@@ -55,6 +56,8 @@ export abstract class ExportCacheBase implements ExportCache {
                 return "swc";
             case ExportFormat.PortalJson:
                 return "json";
+            case ExportFormat.Parquet:
+                return "parquet";
             case ExportFormat.LegacyJson:
                 return "json";
             default:
