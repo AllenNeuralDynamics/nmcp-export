@@ -22,9 +22,11 @@ export type PortalCollection = {
     reference: string | null;
 }
 
+// GraphQL types annotationSpace as a plain Int, so the API's enum value crosses the wire untranslated.
+// These must stay identical to nmcp-api's PortalAnnotationSpace (src/io/portalFormat.ts).
 export enum PortalAnnotationSpace {
-    Specimen = 0,
-    Atlas = 1
+    Specimen = 100,
+    Atlas = 200
 }
 
 export type PortalSpecimen = {

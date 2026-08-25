@@ -59,6 +59,20 @@ export function createAxonFromDendriteReconstruction(): PortalReconstruction {
     return recon;
 }
 
+export function createSpecimenSpaceReconstruction(): PortalReconstruction {
+    const recon = createBaseReconstruction();
+    recon.annotationSpace = PortalAnnotationSpace.Specimen;
+    return recon;
+}
+
+// Assigns the raw number the API sends over the wire, bypassing the enum, so a test can state the
+// GraphQL Int contract without restating whatever the enum currently happens to be.
+export function createRawAnnotationSpaceReconstruction(annotationSpace: number | null | undefined): PortalReconstruction {
+    const recon = createBaseReconstruction();
+    (recon as any).annotationSpace = annotationSpace;
+    return recon;
+}
+
 export function createNullFieldsReconstruction(): PortalReconstruction {
     return {
         id: "recon-null",

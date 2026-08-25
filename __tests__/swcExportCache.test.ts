@@ -1,6 +1,13 @@
 import { describe, it, expect } from "vitest";
 import { SwcExport } from "../src/export/swcExportCache";
-import { createBaseReconstruction, createNullFieldsReconstruction } from "./fixtures";
+import {
+    createBaseReconstruction,
+    createNullFieldsReconstruction,
+    createRawAnnotationSpaceReconstruction,
+    createSpecimenSpaceReconstruction,
+} from "./fixtures";
+
+const ATLAS_SPACE_LINE = "# Annotation Space:\t\tCCFv3.0 Axes> X: Anterior-Posterior; Y: Inferior-Superior; Z:Left-Right";
 
 function format(reconstruction: any): string {
     return (SwcExport as any).formatReconstruction(reconstruction, true);
@@ -67,5 +74,54 @@ describe("SwcExportCache", () => {
         const strainLine = lines.find(l => l.includes("Sample Strain"));
 
         expect(strainLine).toMatch(/Sample Strain:\s*$/);
+    });
+
+    it("atlas space emits the CCFv3.0 annotation space line", () => {
+        const output = format(createBaseReconstruction());
+        const lines = output.split("\n");
+
+        expect(lines).toContain(ATLAS_SPACE_LINE);
+    });
+
+    it("specimen space omits the annotation space line entirely", () => {
+        const output = format(createSpecimenSpaceReconstruction());
+        const lines = output.split("\n");
+
+        expect(lines.some(l => l.includes("Annotation Space"))).toBe(false);
+        expect(lines.some(l => l.includes("CCFv3.0"))).toBe(false);
+    });
+
+    it("specimen space keeps every other header line", () => {
+        const atlasLines = format(createBaseReconstruction()).split("\n");
+        const specimenLines = format(createSpecimenSpaceReconstruction()).split("\n");
+
+        expect(specimenLines.some(l => l.includes("Terms-of-Use"))).toBe(true);
+
+        const atlasHeaders = atlasLines.filter(l => l.startsWith("#"));
+        const specimenHeaders = specimenLines.filter(l => l.startsWith("#"));
+        expect(specimenHeaders).toHaveLength(atlasHeaders.length - 1);
+    });
+
+    // Written against the raw numbers the API sends rather than the enum, so this fails if the local
+    // enum drifts from ../nmcp-api's values.
+    it.each([
+        [200, true],
+        [100, false],
+        [null, false],
+        [undefined, false],
+        [1, false],
+        [999, false],
+    ])("raw annotationSpace %s decides the CCFv3.0 line", (value, expected) => {
+        const output = format(createRawAnnotationSpaceReconstruction(value as any));
+        const lines = output.split("\n");
+
+        expect(lines.some(l => l.includes("Annotation Space"))).toBe(expected);
+    });
+
+    it("node data is identical across annotation spaces", () => {
+        const atlasNodes = format(createBaseReconstruction()).split("\n").filter(l => !l.startsWith("#"));
+        const specimenNodes = format(createSpecimenSpaceReconstruction()).split("\n").filter(l => !l.startsWith("#"));
+
+        expect(specimenNodes).toEqual(atlasNodes);
     });
 });
